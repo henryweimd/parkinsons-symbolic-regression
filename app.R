@@ -33,8 +33,8 @@ ui <- page_sidebar(
     title = "Algorithm Controls",
     h5("Evolutionary Parameters"),
     p("Give the AI more time and a larger population to find a better mathematical fit."),
-    numericInput("popSize", "Population Size:", value = 250, min = 10, max = 1000, step=10),
-    numericInput("generations", "Generations:", value = 40, min = 5, max = 200, step=5),
+    numericInput("popSize", "Population Size:", value = 100, min = 10, max = 1000, step=10),
+    numericInput("generations", "Generations:", value = 20, min = 5, max = 200, step=5),
     numericInput("mutationChance", "Mutation Rate:", value = 0.1, min = 0.01, max = 0.5, step=0.01),
     
     h5("Interpretability Control"),
@@ -178,13 +178,11 @@ server <- function(input, output, session) {
     
     history_costs <- numeric(0)
     monitor_fn <- function(result) {
-      cost <- result$best$cost
-      history_costs <<- c(history_costs, cost)
-      shiny::incProgress(1, detail = paste("Best Score so far:", round(cost, 2)))
+      history_costs <<- c(history_costs, result$best$cost)
     }
     
-    # Run the genetic algorithm with a live progress bar
-    withProgress(message = 'Evolving Equations...', value = 0, max = input$generations, {
+    # Run the genetic algorithm with a generic progress bar
+    withProgress(message = 'Evolving Equations (Please wait 5-10s)...', value = 0.5, {
       ge <- GrammaticalEvolution(grammarDef, fitnessFunction, 
                                  iterations = input$generations, 
                                  popSize = input$popSize,
