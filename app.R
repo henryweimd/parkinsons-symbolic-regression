@@ -154,14 +154,17 @@ server <- function(input, output, session) {
     )
     grammarDef <- CreateGrammar(ruleDef)
     
+    # Pre-compute environment and targets to prevent memory explosion
+    train_env <- list(age=train_data$age, JitterAbs=train_data$JitterAbs, Shimmer=train_data$Shimmer, HNR=train_data$HNR, PPE=train_data$PPE, c1=1.5, c2=0.5, c3=10.0)
+    train_updrs <- train_data$motor_UPDRS
+    
     fitnessFunction <- function(expr) {
       result <- tryCatch({
-        eval_env <- list(age=train_data$age, JitterAbs=train_data$JitterAbs, Shimmer=train_data$Shimmer, HNR=train_data$HNR, PPE=train_data$PPE, c1=1.5, c2=0.5, c3=10.0)
-        preds <- eval(expr, envir = eval_env)
+        preds <- eval(expr, envir = train_env)
         if (any(is.na(preds)) || any(is.infinite(preds))) return(Inf)
         
         # Calculate RMSE
-        rmse <- sqrt(mean((train_data$motor_UPDRS - preds)^2))
+        rmse <- sqrt(mean((train_updrs - preds)^2))
         
         # Apply the Interpretability (Complexity) Penalty
         expr_str <- deparse(expr)
