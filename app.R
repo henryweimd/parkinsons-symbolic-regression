@@ -50,8 +50,8 @@ ui <- page_sidebar(
     
     h5("Evolutionary Parameters"),
     p("Give the AI more time and a larger population to find a better mathematical fit."),
-    numericInput("popSize", "Population Size:", value = 100, min = 10, max = 1000, step=10),
-    numericInput("generations", "Generations:", value = 20, min = 5, max = 200, step=5),
+    numericInput("popSize", "Population Size:", value = 250, min = 10, max = 1000, step=10),
+    numericInput("generations", "Generations:", value = 50, min = 5, max = 200, step=5),
     numericInput("mutationChance", "Mutation Rate:", value = 0.1, min = 0.01, max = 0.5, step=0.01),
     
     h5("Interpretability Control"),
