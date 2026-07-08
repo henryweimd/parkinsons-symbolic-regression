@@ -178,7 +178,6 @@ server <- function(input, output, session) {
       )
     } else {
       full_df <- df_ins
-      full_df$charges <- full_df$charges / 1000.0 # Scale to thousands so the AI can find coefficients easily
       target_col <- "charges"
       
       ruleDef <- list(
@@ -190,6 +189,18 @@ server <- function(input, output, session) {
     }
     
     grammarDef <- CreateGrammar(ruleDef)
+    
+    # --- Dynamic Scaling ---
+    # Automatically scale large targets so the AI doesn't have to search for massive numbers
+    target_mean <- mean(full_df[[target_col]], na.rm=TRUE)
+    if (target_mean > 500) {
+      scale_factor <- 10^(floor(log10(target_mean)) - 1)
+      if (scale_factor < 1) scale_factor <- 1000
+      full_df[[target_col]] <- full_df[[target_col]] / scale_factor
+      target_disp <- paste0(target_col, " (Scaled / ", scale_factor, ")")
+    } else {
+      target_disp <- target_col
+    }
     
     # Downsample for speed
     set.seed(42)
@@ -223,27 +234,25 @@ server <- function(input, output, session) {
     output$lmR2 <- renderText({ paste(round(lm_r2, 3)) })
     output$lmR2_eval <- renderUI({ get_performance_emoji(lm_r2, is_parkinsons) })
     
+    # Dynamically build the linear equation string so nothing is hard-coded
     cfs <- round(coef(lm_mod), 3)
-    if (is_parkinsons) {
-      eq_str <- paste0("UPDRS = ", cfs[1], 
-                       "\n      + (", cfs[2], " * Age)",
-                       "\n      + (", cfs[3], " * JitterAbs)",
-                       "\n      + (", cfs[4], " * Shimmer)",
-                       "\n      + (", cfs[5], " * HNR)",
-                       "\n      + (", cfs[6], " * PPE)")
-    } else {
-      eq_str <- paste0("Charges (in Thousands) = \n      ", cfs[1], 
-                       "\n      + (", cfs[2], " * Age)",
-                       "\n      + (", cfs[3], " * BMI)",
-                       "\n      + (", cfs[4], " * Smoker)")
+    cfs[is.na(cfs)] <- 0
+    intercept <- cfs[1]
+    term_names <- names(cfs)[-1]
+    term_vals <- cfs[-1]
+    
+    eq_str <- paste0(target_disp, " =\n      ", intercept)
+    for (i in seq_along(term_names)) {
+      eq_str <- paste0(eq_str, "\n      + (", term_vals[i], " * ", term_names[i], ")")
     }
+    
     output$lmEquation <- renderPrint({ cat(eq_str) })
     
     output$lmPlot <- renderPlot({
       par(bg = "#121212", col.axis = "#e0e0e0", col.lab = "#e0e0e0", fg = "#444444", mar = c(4, 4, 1, 1))
       plot(test_targets, lm_preds, 
-           xlab = paste("Actual", target_col), 
-           ylab = paste("Predicted", target_col), 
+           xlab = paste("Actual", target_disp), 
+           ylab = paste("Predicted", target_disp), 
            pch = 16, col = "#00d2ff88", cex = 1.2)
       abline(a = 0, b = 1, col = "white", lwd = 2, lty = 2)
     })
@@ -312,7 +321,7 @@ server <- function(input, output, session) {
       output$gpR2 <- renderText({ ifelse(is.na(gp_r2), "Error", paste(round(gp_r2, 3))) })
       output$gpR2_eval <- renderUI({ get_performance_emoji(gp_r2, is_parkinsons) })
       
-      eq_prefix <- ifelse(is_parkinsons, "UPDRS =\n", "Charges (in Thousands) =\n")
+      eq_prefix <- paste0(target_disp, " =\n")
       eq_formatted <- paste(eq_prefix, paste(deparse(best_expr[[1]]), collapse = " \n"))
       output$gpEquation <- renderPrint({ cat(eq_formatted) })
       
@@ -325,8 +334,8 @@ server <- function(input, output, session) {
       output$gpPlot <- renderPlot({
         par(bg = "#121212", col.axis = "#e0e0e0", col.lab = "#e0e0e0", fg = "#444444", mar = c(4, 4, 1, 1))
         plot(test_targets, gp_preds, 
-             xlab = paste("Actual", target_col), 
-             ylab = paste("Predicted", target_col), 
+             xlab = paste("Actual", target_disp), 
+             ylab = paste("Predicted", target_disp), 
              pch = 16, col = "#00d2ff88", cex = 1.2)
         abline(a = 0, b = 1, col = "white", lwd = 2, lty = 2)
       })
