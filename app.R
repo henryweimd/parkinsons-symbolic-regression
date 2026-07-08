@@ -62,28 +62,15 @@ ui <- page_sidebar(
     tags$a(href="https://github.com/henryweimd/parkinsons-symbolic-regression", target="_blank", style="color: #00d2ff; text-decoration: none; font-weight: bold; display: block; text-align: center;", icon("github"), " View Source on GitHub")
   ),
   
-  # Intro and Variable Glossary
-  layout_columns(
-    col_widths = c(8, 4),
-    card(
-      card_header("Why Symbolic Regression?", class="bg-dark text-white"),
-      card_body(
-        markdown("
-        **Neural Networks** are highly accurate but act as unreadable 'Black Boxes'. 
-        **Symbolic Regression** solves this by evolving a clear, readable mathematical formula from scratch. It naturally discovers non-linear biological relationships (like thresholds or compounding effects) that doctors can actually read, understand, and verify in a lab.
-        ")
-      )
-    ),
-    card(
-      card_header("Dataset Variables", class="bg-dark text-white"),
-      card_body(
-        markdown("
-        *Predicting Parkinson's UPDRS using voice:*
-        - **Jitter / Shimmer:** Micro-variations in pitch and volume.
-        - **HNR:** Harmonics-to-Noise Ratio (vocal clarity).
-        - **PPE:** Pitch Period Entropy (dysphonia/hoarseness).
-        ")
-      )
+  # Intro, Context, and Citation
+  card(
+    card_header("Why Symbolic Regression? (Featuring the Parkinson's Telemonitoring Dataset)", class="bg-dark text-white"),
+    card_body(
+      markdown("
+      **Neural Networks** are highly accurate but act as unreadable 'Black Boxes'. **Symbolic Regression** solves this by evolving a clear, readable mathematical formula from scratch. It naturally discovers non-linear biological relationships that doctors can actually read and verify in a lab.
+      
+      **The Context:** We are predicting Parkinson's disease severity (UPDRS) using non-invasive voice recordings via the [UCI Parkinson's Telemonitoring Dataset](https://archive.ics.uci.edu/dataset/189/parkinsons+telemonitoring). The AI is challenged to find a math equation linking four vocal biomarkers: **Jitter & Shimmer** (variations in pitch/volume), **HNR** (vocal clarity), and **PPE** (dysphonia/hoarseness).
+      ")
     )
   ),
   
