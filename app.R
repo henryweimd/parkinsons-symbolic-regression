@@ -169,8 +169,8 @@ server <- function(input, output, session) {
       
       ruleDef <- list(
         expr = grule(op(expr, expr), func(expr), var, const),
-        op   = grule('+', '-', '*'),
-        func = grule(sin, cos, abs),
+        op   = grule('+', '-', '*', safe_div),
+        func = grule(sin, cos, abs, safe_log, safe_sqrt),
         var  = grule(age, JitterAbs, Shimmer, HNR, PPE),
         const= grule(0.1, 0.5, 1.0, 2.0, 5.0, 10.0)
       )
@@ -211,12 +211,19 @@ server <- function(input, output, session) {
     train_targets <- train_data[[target_col]]
     test_targets <- test_data[[target_col]]
     
+    # Inject protected math functions into evaluation environments to prevent NaN domain errors
+    safe_env_vars <- list(
+      safe_log = function(x) log(abs(x) + 1e-6),
+      safe_sqrt = function(x) sqrt(abs(x)),
+      safe_div = function(a, b) ifelse(abs(b) < 1e-6, a, a/b)
+    )
+    
     if (is_parkinsons) {
-      train_env <- list(age=train_data$age, JitterAbs=train_data$JitterAbs, Shimmer=train_data$Shimmer, HNR=train_data$HNR, PPE=train_data$PPE)
-      eval_env <- list(age=test_data$age, JitterAbs=test_data$JitterAbs, Shimmer=test_data$Shimmer, HNR=test_data$HNR, PPE=test_data$PPE)
+      train_env <- c(list(age=train_data$age, JitterAbs=train_data$JitterAbs, Shimmer=train_data$Shimmer, HNR=train_data$HNR, PPE=train_data$PPE), safe_env_vars)
+      eval_env <- c(list(age=test_data$age, JitterAbs=test_data$JitterAbs, Shimmer=test_data$Shimmer, HNR=test_data$HNR, PPE=test_data$PPE), safe_env_vars)
     } else {
-      train_env <- list(age=train_data$age, bmi=train_data$bmi, smoker=train_data$smoker)
-      eval_env <- list(age=test_data$age, bmi=test_data$bmi, smoker=test_data$smoker)
+      train_env <- c(list(age=train_data$age, bmi=train_data$bmi, smoker=train_data$smoker), safe_env_vars)
+      eval_env <- c(list(age=test_data$age, bmi=test_data$bmi, smoker=test_data$smoker), safe_env_vars)
     }
     
     # 2. Linear Regression Model
