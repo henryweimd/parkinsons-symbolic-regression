@@ -56,7 +56,10 @@ ui <- page_sidebar(
     sliderInput("complexity_penalty", "Penalty for Complexity:", min=0, max=0.5, value=0.00, step=0.01),
     p(style="font-size: 0.85em; color: #aaaaaa;", "Higher penalties force the AI to invent shorter, more human-readable equations by punishing long, messy formulas."),
     
-    actionButton("runModels", "Run & Compare Models", class = "btn-primary", style="font-weight:bold; font-size:16px; margin-top: 15px;")
+    actionButton("runModels", "Run & Compare Models", class = "btn-primary", style="font-weight:bold; font-size:16px; margin-top: 15px;"),
+    
+    hr(style="border-top: 1px solid #555; margin-top: 30px;"),
+    tags$a(href="https://github.com/henryweimd/parkinsons-symbolic-regression", target="_blank", style="color: #00d2ff; text-decoration: none; font-weight: bold; display: block; text-align: center;", icon("github"), " View Source on GitHub")
   ),
   
   # Intro and Variable Glossary
