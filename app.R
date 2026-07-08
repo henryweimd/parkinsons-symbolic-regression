@@ -161,7 +161,7 @@ server <- function(input, output, session) {
     fitnessFunction <- function(expr) {
       result <- tryCatch({
         preds <- eval(expr, envir = train_env)
-        if (any(is.na(preds)) || any(is.infinite(preds))) return(Inf)
+        if (!is.numeric(preds) || any(is.na(preds)) || any(is.infinite(preds))) return(Inf)
         
         # Calculate RMSE
         rmse <- sqrt(mean((train_updrs - preds)^2))
@@ -198,12 +198,22 @@ server <- function(input, output, session) {
     eval_env <- list(age=test_data$age, JitterAbs=test_data$JitterAbs, Shimmer=test_data$Shimmer, HNR=test_data$HNR, PPE=test_data$PPE, c1=1.5, c2=0.5, c3=10.0)
     gp_preds <- eval(best_expr, envir = eval_env)
     
-    if (any(is.na(gp_preds)) || any(is.infinite(gp_preds))) {
+    if (!is.numeric(gp_preds) || any(is.na(gp_preds)) || any(is.infinite(gp_preds))) {
       gp_rmse <- Inf
       gp_r2 <- NA
     } else {
+      # Handle case where the AI discovers a simple constant (e.g., UPDRS = c3)
+      if (length(gp_preds) == 1) {
+        gp_preds <- rep(gp_preds, length(test_data$motor_UPDRS))
+      }
       gp_rmse <- sqrt(mean((test_data$motor_UPDRS - gp_preds)^2))
-      gp_r2 <- cor(test_data$motor_UPDRS, gp_preds)^2
+      
+      # R-squared calculation crashes if predictions have zero variance (i.e. a flat line)
+      if (sd(gp_preds) == 0) {
+        gp_r2 <- NA
+      } else {
+        gp_r2 <- cor(test_data$motor_UPDRS, gp_preds)^2
+      }
     }
     
     output$gpRmse <- renderText({ ifelse(is.infinite(gp_rmse), "Error", paste(round(gp_rmse, 2))) })
