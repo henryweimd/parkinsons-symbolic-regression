@@ -29,6 +29,21 @@ my_theme <- bs_theme(
 ui <- page_sidebar(
   title = "Discovering Medical Math: Linear vs. Symbolic Regression",
   theme = my_theme,
+  tags$head(
+    tags$style(HTML("
+      .value-box { box-shadow: 0 4px 12px rgba(0,0,0,0.5); border-radius: 12px; transition: transform 0.2s; }
+      .value-box:hover { transform: translateY(-5px); }
+      .value-box .value { font-size: 2.2rem; font-weight: 700; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+      pre { font-size: 1.15rem; background-color: #1a1a1a; border: 1px solid #333; font-weight: 600; padding: 15px; border-radius: 8px; white-space: pre-wrap; }
+      #lmEquation { color: #8bb3f4; border-left: 5px solid #3a7bd5; }
+      #gpEquation { color: #66e0ff; border-left: 5px solid #00d2ff; }
+      .card-header { font-size: 1.25rem; font-weight: 600; letter-spacing: 0.5px; }
+      h5 { font-weight: 600; margin-top: 15px; margin-bottom: 10px; color: #ffffff; }
+      p { font-size: 1.05rem; line-height: 1.6; color: #dcdcdc; }
+      .btn-primary { box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); border-radius: 8px; transition: all 0.3s; }
+      .btn-primary:hover { box-shadow: 0 0 25px rgba(0, 210, 255, 0.7); transform: scale(1.05); }
+    "))
+  ),
   sidebar = sidebar(
     title = "Algorithm Controls",
     h5("Evolutionary Parameters"),
