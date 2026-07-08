@@ -53,7 +53,7 @@ ui <- page_sidebar(
     numericInput("mutationChance", "Mutation Rate:", value = 0.1, min = 0.01, max = 0.5, step=0.01),
     
     h5("Interpretability Control"),
-    sliderInput("complexity_penalty", "Penalty for Complexity:", min=0, max=0.5, value=0.05, step=0.01),
+    sliderInput("complexity_penalty", "Penalty for Complexity:", min=0, max=0.5, value=0.00, step=0.01),
     p(style="font-size: 0.85em; color: #aaaaaa;", "Higher penalties force the AI to invent shorter, more human-readable equations by punishing long, messy formulas."),
     
     actionButton("runModels", "Run & Compare Models", class = "btn-primary", style="font-weight:bold; font-size:16px; margin-top: 15px;")
@@ -165,12 +165,12 @@ server <- function(input, output, session) {
       op   = grule('+', '-', '*', '/'),
       func = grule(sin, cos, log, abs, sqrt),
       var  = grule(age, JitterAbs, Shimmer, HNR, PPE),
-      const= grule(c1, c2, c3)
+      const= grule(0.1, 0.5, 1.0, 2.0, 5.0, 10.0)
     )
     grammarDef <- CreateGrammar(ruleDef)
     
     # Pre-compute environment and targets to prevent memory explosion
-    train_env <- list(age=train_data$age, JitterAbs=train_data$JitterAbs, Shimmer=train_data$Shimmer, HNR=train_data$HNR, PPE=train_data$PPE, c1=1.5, c2=0.5, c3=10.0)
+    train_env <- list(age=train_data$age, JitterAbs=train_data$JitterAbs, Shimmer=train_data$Shimmer, HNR=train_data$HNR, PPE=train_data$PPE)
     train_updrs <- train_data$motor_UPDRS
     
     fitnessFunction <- function(expr) {
@@ -210,7 +210,7 @@ server <- function(input, output, session) {
     })
     
     best_expr <- ge$best$expression
-    eval_env <- list(age=test_data$age, JitterAbs=test_data$JitterAbs, Shimmer=test_data$Shimmer, HNR=test_data$HNR, PPE=test_data$PPE, c1=1.5, c2=0.5, c3=10.0)
+    eval_env <- list(age=test_data$age, JitterAbs=test_data$JitterAbs, Shimmer=test_data$Shimmer, HNR=test_data$HNR, PPE=test_data$PPE)
     gp_preds <- eval(best_expr, envir = eval_env)
     
     if (!is.numeric(gp_preds) || any(is.na(gp_preds)) || any(is.infinite(gp_preds))) {
@@ -234,8 +234,8 @@ server <- function(input, output, session) {
     output$gpRmse <- renderText({ ifelse(is.infinite(gp_rmse), "Error", paste(round(gp_rmse, 2))) })
     output$gpR2 <- renderText({ ifelse(is.na(gp_r2), "Error", paste(round(gp_r2, 3))) })
     
-    # Neatly format the discovered expression
-    eq_formatted <- paste("UPDRS =\n", paste(deparse(best_expr), collapse = " \n"))
+    # Neatly format the discovered expression (removing the 'expression()' wrapper)
+    eq_formatted <- paste("UPDRS =\n", paste(deparse(best_expr[[1]]), collapse = " \n"))
     output$gpEquation <- renderPrint({ cat(eq_formatted) })
     
     output$gpHistory <- renderPlot({
