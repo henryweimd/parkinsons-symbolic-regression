@@ -896,10 +896,10 @@
   },
   "files": {
     ".github/workflows/generate-manifest.yml": {
-      "checksum": "6e5bfa8613e28684f818edb2aba25477"
+      "checksum": "5d12c743b9c488646f2b4f20c3575046"
     },
     "app.R": {
-      "checksum": "4d789cd074dc9912e3fff960b72915d0"
+      "checksum": "38698aaabcad00c7faabe5dc776c418e"
     },
     "insurance.csv": {
       "checksum": "b763ab1bda54995974c9a83cf173441f"
