@@ -178,14 +178,14 @@ server <- function(input, output, session) {
       )
     } else {
       full_df <- df_ins
+      full_df$charges <- full_df$charges / 1000.0 # Scale to thousands so the AI can find coefficients easily
       target_col <- "charges"
       
       ruleDef <- list(
-        expr = grule(op(expr, expr), func(expr), var, const),
-        op   = grule('+', '-', '*', '/'),
-        func = grule(log, abs, sqrt),
-        var  = grule(age, bmi, children, smoker),
-        const= grule(100.0, 500.0, 1000.0, 5000.0)
+        expr = grule(op(expr, expr), var, const),
+        op   = grule('+', '-', '*'),
+        var  = grule(age, bmi, smoker),
+        const= grule(0.1, 0.25, 0.5, 1.0, 5.0, 10.0)
       )
     }
     
@@ -206,8 +206,8 @@ server <- function(input, output, session) {
       train_env <- list(age=train_data$age, JitterAbs=train_data$JitterAbs, Shimmer=train_data$Shimmer, HNR=train_data$HNR, PPE=train_data$PPE)
       eval_env <- list(age=test_data$age, JitterAbs=test_data$JitterAbs, Shimmer=test_data$Shimmer, HNR=test_data$HNR, PPE=test_data$PPE)
     } else {
-      train_env <- list(age=train_data$age, bmi=train_data$bmi, children=train_data$children, smoker=train_data$smoker)
-      eval_env <- list(age=test_data$age, bmi=test_data$bmi, children=test_data$children, smoker=test_data$smoker)
+      train_env <- list(age=train_data$age, bmi=train_data$bmi, smoker=train_data$smoker)
+      eval_env <- list(age=test_data$age, bmi=test_data$bmi, smoker=test_data$smoker)
     }
     
     # 2. Linear Regression Model
@@ -232,11 +232,10 @@ server <- function(input, output, session) {
                        "\n      + (", cfs[5], " * HNR)",
                        "\n      + (", cfs[6], " * PPE)")
     } else {
-      eq_str <- paste0("Charges = ", cfs[1], 
+      eq_str <- paste0("Charges (in Thousands) = \n      ", cfs[1], 
                        "\n      + (", cfs[2], " * Age)",
                        "\n      + (", cfs[3], " * BMI)",
-                       "\n      + (", cfs[4], " * Children)",
-                       "\n      + (", cfs[5], " * Smoker)")
+                       "\n      + (", cfs[4], " * Smoker)")
     }
     output$lmEquation <- renderPrint({ cat(eq_str) })
     
@@ -313,7 +312,7 @@ server <- function(input, output, session) {
       output$gpR2 <- renderText({ ifelse(is.na(gp_r2), "Error", paste(round(gp_r2, 3))) })
       output$gpR2_eval <- renderUI({ get_performance_emoji(gp_r2, is_parkinsons) })
       
-      eq_prefix <- ifelse(is_parkinsons, "UPDRS =\n", "Charges =\n")
+      eq_prefix <- ifelse(is_parkinsons, "UPDRS =\n", "Charges (in Thousands) =\n")
       eq_formatted <- paste(eq_prefix, paste(deparse(best_expr[[1]]), collapse = " \n"))
       output$gpEquation <- renderPrint({ cat(eq_formatted) })
       
