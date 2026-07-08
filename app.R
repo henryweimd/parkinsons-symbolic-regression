@@ -186,7 +186,7 @@ server <- function(input, output, session) {
     }
     
     # Run the genetic algorithm with a generic progress bar
-    withProgress(message = 'Evolving 10,000 Equations...', value = 0, max = input$generations, {
+    withProgress(message = paste0('Evolving ', input$generations * input$popSize, ' Equations...'), value = 0, max = input$generations, {
       ge <- GrammaticalEvolution(grammarDef, fitnessFunction, 
                                  iterations = input$generations, 
                                  popSize = input$popSize,
