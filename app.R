@@ -98,7 +98,7 @@ ui <- page_sidebar(
         p("Linear Regression assumes everything is a simple, straight-line weighted average. It is perfectly interpretable, but completely inflexible."),
         layout_columns(
           value_box(title = "Test RMSE (Lower = Better)", value = textOutput("lmRmse"), theme = "secondary"),
-          value_box(title = "R-Squared (1.0 = Perfect)", value = textOutput("lmR2"), theme = "secondary")
+          value_box(title = "R-Squared (1.0 = Perfect)", value = textOutput("lmR2"), uiOutput("lmR2_eval"), theme = "secondary")
         ),
         h5("The Final Equation:"),
         verbatimTextOutput("lmEquation"),
@@ -116,7 +116,7 @@ ui <- page_sidebar(
         p("Symbolic Regression invents a custom, free-form equation. It naturally discovers non-linear biological thresholds, compounding effects, and ratios."),
         layout_columns(
           value_box(title = "Test RMSE (Lower = Better)", value = textOutput("gpRmse"), theme = "primary"),
-          value_box(title = "R-Squared (1.0 = Perfect)", value = textOutput("gpR2"), theme = "primary")
+          value_box(title = "R-Squared (1.0 = Perfect)", value = textOutput("gpR2"), uiOutput("gpR2_eval"), theme = "primary")
         ),
         h5("The Discovered Equation:"),
         verbatimTextOutput("gpEquation"),
@@ -152,6 +152,17 @@ server <- function(input, output, session) {
     
     output$lmRmse <- renderText({ paste(round(lm_rmse, 2)) })
     output$lmR2 <- renderText({ paste(round(lm_r2, 3)) })
+    
+    # Intuitive Performance Explainer
+    get_performance_emoji <- function(val) {
+      if (is.na(val)) return(p("⚠️ Error (Flatline)", style="margin:0; font-size:1.1rem; color:#ffd700;"))
+      if (val < 0.15) return(p("🔴 Weak (High Biological Noise)", style="margin:0; font-size:1.1rem; color:#ff6b6b;"))
+      if (val < 0.30) return(p("🟠 Fair (Typical for Voice Data)", style="margin:0; font-size:1.1rem; color:#ffa502;"))
+      if (val < 0.50) return(p("🟡 Good Signal", style="margin:0; font-size:1.1rem; color:#eccc68;"))
+      return(p("🟢 Strong Signal", style="margin:0; font-size:1.1rem; color:#7bed9f;"))
+    }
+    output$lmR2_eval <- renderUI({ get_performance_emoji(lm_r2) })
+    
     output$lmEquation <- renderPrint({ cat(eq_str) })
     
     output$lmPlot <- renderPlot({
@@ -237,6 +248,7 @@ server <- function(input, output, session) {
     
     output$gpRmse <- renderText({ ifelse(is.infinite(gp_rmse), "Error", paste(round(gp_rmse, 2))) })
     output$gpR2 <- renderText({ ifelse(is.na(gp_r2), "Error", paste(round(gp_r2, 3))) })
+    output$gpR2_eval <- renderUI({ get_performance_emoji(gp_r2) })
     
     # Neatly format the discovered expression (removing the 'expression()' wrapper)
     eq_formatted <- paste("UPDRS =\n", paste(deparse(best_expr[[1]]), collapse = " \n"))
