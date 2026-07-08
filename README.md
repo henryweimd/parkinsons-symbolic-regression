@@ -1,5 +1,9 @@
 # Symbolic Regression vs Traditional Models (Parkinson's Dataset)
 
+🚀 **[Click Here to View the Live Interactive Dashboard](https://henryweimd-parkinsons-symbolic-regression.share.connect.posit.cloud/)**
+
+![App Screenshot](screenshot.png)
+
 This repository contains an interactive R Shiny application that compares the performance and approach of **Symbolic Regression** (via Grammatical Evolution) against standard **Linear Regression** on a medical dataset.
 
 ## The Dataset
