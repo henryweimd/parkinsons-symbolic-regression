@@ -169,8 +169,8 @@ server <- function(input, output, session) {
       
       ruleDef <- list(
         expr = grule(op(expr, expr), func(expr), var, const),
-        op   = grule('+', '-', '*', '/'),
-        func = grule(sin, cos, log, abs, sqrt),
+        op   = grule('+', '-', '*'),
+        func = grule(sin, cos, abs),
         var  = grule(age, JitterAbs, Shimmer, HNR, PPE),
         const= grule(0.1, 0.5, 1.0, 2.0, 5.0, 10.0)
       )
