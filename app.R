@@ -104,8 +104,6 @@ ui <- page_sidebar(
         ),
         h5("The Discovered Equation:"),
         verbatimTextOutput("gpEquation"),
-        h5(style="margin-top: 15px;", "Evolution Progress:"),
-        plotOutput("gpHistory", height = "120px"),
         hr(),
         p("Actual vs Predicted: If the formula is perfectly accurate, all dots will hug the straight white line."),
         plotOutput("gpPlot", height = "400px")
@@ -324,12 +322,6 @@ server <- function(input, output, session) {
       eq_prefix <- paste0(target_disp, " =\n")
       eq_formatted <- paste(eq_prefix, paste(deparse(best_expr[[1]]), collapse = " \n"))
       output$gpEquation <- renderPrint({ cat(eq_formatted) })
-      
-      output$gpHistory <- renderPlot({
-        par(bg = "#121212", col.axis = "#e0e0e0", col.lab = "#e0e0e0", fg = "#444444", mar = c(2, 2, 0, 0))
-        plot(ge_res$evolution$best, type = "l", col = "#00d2ff", lwd = 2,
-             xlab = "", ylab = "")
-      })
       
       output$gpPlot <- renderPlot({
         par(bg = "#121212", col.axis = "#e0e0e0", col.lab = "#e0e0e0", fg = "#444444", mar = c(4, 4, 1, 1))
