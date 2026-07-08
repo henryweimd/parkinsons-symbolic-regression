@@ -4,8 +4,8 @@ library(gramEvol)
 library(bslib)
 
 # --- 1. Load and Prep Data ---
-url <- "https://archive.ics.uci.edu/ml/machine-learning-databases/parkinsons/telemonitoring/parkinsons_updrs.data"
-df <- read.csv(url)
+# Loading data from local copy in the repository
+df <- read.csv("parkinsons_updrs.data")
 
 features <- c("motor_UPDRS", "age", "Jitter.Abs.", "Shimmer", "HNR", "PPE")
 df_subset <- df[, features]
