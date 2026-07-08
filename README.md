@@ -1,4 +1,4 @@
-# Symbolic Regression vs Traditional Models (Parkinson's Dataset)
+# AI Face-Off: Linear vs Symbolic Regression (Dual-Dataset Showcase)
 
 🚀 **[Click Here to View the Live Interactive Dashboard](https://henryweimd-parkinsons-symbolic-regression.share.connect.posit.cloud/)**
 
@@ -6,10 +6,11 @@
 
 This repository contains an interactive R Shiny application that compares the performance and approach of **Symbolic Regression** (via Grammatical Evolution) against standard **Linear Regression** on a medical dataset.
 
-## The Dataset
-The app uses a subset of the **Parkinson's Telemonitoring Dataset** from the UCI Machine Learning Repository. It attempts to predict the clinical `motor_UPDRS` severity score using patient age and various vocal cord measurements (Jitter and Shimmer). 
+## The Datasets
+This dashboard features two completely different medical datasets to perfectly demonstrate where traditional Linear AI works, and where it spectacularly fails.
 
-*Note: A static copy of the dataset is included directly in this repository (`parkinsons_updrs.data`) to ensure the app remains functional even if the source URL goes offline.*
+1. **Parkinson's Telemonitoring (UCI):** Predicting clinical `motor_UPDRS` severity using non-invasive vocal cord measurements (Jitter, Shimmer, HNR, PPE). This demonstrates how AI handles highly noisy, real-world biological data.
+2. **US Medical Insurance Costs:** Predicting yearly medical charges based on Age, BMI, and Smoker status. This is the "Mic Drop" dataset—Linear Regression struggles here because BMI only spikes costs *if* the patient is also a smoker. Symbolic regression naturally discovers this hidden multiplier and vastly outperforms the traditional model.
 
 ## What is Symbolic Regression?
 Instead of assuming a pre-defined mathematical structure (like $y = mx + b$), Symbolic Regression uses evolutionary algorithms to "invent" mathematical formulas from scratch. The algorithm starts with random math operators (addition, sine, logs) and variables, evaluates how well they fit the data, and breeds the best equations together over multiple generations to find an optimal formula.
