@@ -93,6 +93,9 @@ ui <- page_sidebar(
         h5("The Discovered Equation:"),
         verbatimTextOutput("gpEquation"),
         hr(),
+        p("Evolutionary Progress (How the math improved over generations):"),
+        plotOutput("gpHistory", height = "200px"),
+        hr(),
         p("Does the custom math equation pull the dots tighter to the white line?"),
         plotOutput("gpPlot", height = "300px"),
         p("Error Distribution (A narrower spike means fewer wild mistakes):"),
@@ -141,7 +144,6 @@ server <- function(input, output, session) {
     })
     
     # Symbolic Model
-    showNotification("Evolving Equations via Genetic Algorithm... This will take ~10-20 seconds!", type = "warning", duration = NULL, id = "gp_notif")
     
     ruleDef <- list(
       expr = grule(op(expr, expr), func(expr), var, const),
@@ -162,7 +164,6 @@ server <- function(input, output, session) {
         rmse <- sqrt(mean((train_data$motor_UPDRS - preds)^2))
         
         # Apply the Interpretability (Complexity) Penalty
-        # nchar gets the length of the string representation of the formula
         expr_str <- deparse(expr)
         complexity <- sum(nchar(expr_str))
         penalty <- input$complexity_penalty * complexity
@@ -172,13 +173,21 @@ server <- function(input, output, session) {
       return(result)
     }
     
-    # Run the genetic algorithm
-    ge <- GrammaticalEvolution(grammarDef, fitnessFunction, 
-                               iterations = input$generations, 
-                               popSize = input$popSize,
-                               mutationChance = input$mutationChance)
+    history_costs <- numeric(0)
+    monitor_fn <- function(result) {
+      cost <- result$best$cost
+      history_costs <<- c(history_costs, cost)
+      shiny::incProgress(1, detail = paste("Best Score so far:", round(cost, 2)))
+    }
     
-    removeNotification(id = "gp_notif")
+    # Run the genetic algorithm with a live progress bar
+    withProgress(message = 'Evolving Equations...', value = 0, max = input$generations, {
+      ge <- GrammaticalEvolution(grammarDef, fitnessFunction, 
+                                 iterations = input$generations, 
+                                 popSize = input$popSize,
+                                 mutationChance = input$mutationChance,
+                                 monitorFunc = monitor_fn)
+    })
     
     best_expr <- ge$best$expression
     eval_env <- list(age=test_data$age, JitterAbs=test_data$JitterAbs, Shimmer=test_data$Shimmer, HNR=test_data$HNR, PPE=test_data$PPE, c1=1.5, c2=0.5, c3=10.0)
@@ -198,6 +207,16 @@ server <- function(input, output, session) {
     # Neatly format the discovered expression
     eq_formatted <- paste("UPDRS =\n", paste(deparse(best_expr), collapse = " \n"))
     output$gpEquation <- renderPrint({ cat(eq_formatted) })
+    
+    output$gpHistory <- renderPlot({
+      if (length(history_costs) == 0) return(plot.new())
+      df_hist <- data.frame(Generation = seq_along(history_costs), Cost = history_costs)
+      ggplot(df_hist, aes(x=Generation, y=Cost)) +
+        geom_line(color="#00d2ff", linewidth=1) +
+        geom_point(color="#ffffff", size=2) +
+        theme_dark() + labs(title="Survival of the Fittest", x="Generation", y="Best Score") +
+        theme(plot.background = element_rect(fill = "#222222"), panel.background = element_rect(fill = "#333333"), text = element_text(color="white"), axis.text = element_text(color="white"))
+    })
     
     output$gpPlot <- renderPlot({
       if (is.infinite(gp_rmse)) return(plot.new())
