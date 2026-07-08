@@ -100,7 +100,7 @@ ui <- page_sidebar(
         h5("The Final Equation:"),
         verbatimTextOutput("lmEquation"),
         hr(),
-        p("If predictions are perfect, all dots will hug the white dashed line."),
+        p("Actual vs Predicted: If the formula is perfectly accurate, all dots will hug the straight white line."),
         plotOutput("lmPlot", height = "400px")
       )
     ),
@@ -121,7 +121,7 @@ ui <- page_sidebar(
         p("Evolutionary Progress (How the math improved over generations):"),
         plotOutput("gpHistory", height = "200px"),
         hr(),
-        p("Does the custom math equation pull the dots tighter to the white line?"),
+        p("Actual vs Predicted: If the formula is perfectly accurate, all dots will hug the straight white line."),
         plotOutput("gpPlot", height = "400px")
       )
     )
