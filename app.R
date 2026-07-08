@@ -59,16 +59,28 @@ ui <- page_sidebar(
     actionButton("runModels", "Run & Compare Models", class = "btn-primary", style="font-weight:bold; font-size:16px; margin-top: 15px;")
   ),
   
-  # Interpretability & Black Box Explanation
-  card(
-    card_header("Why Symbolic Regression? The Power of Interpretability", class="bg-dark text-white"),
-    card_body(
-      markdown("
-      In modern medicine, AI models like **Neural Networks** are highly accurate, but they are 'Black Boxes'. They use millions of hidden weights, making it impossible for a doctor to understand *why* a prediction was made. 
-
-      **Symbolic Regression bridges the gap between machine accuracy and human understanding.**
-      Instead of hiding its logic, it evolves an exact, readable mathematical formula. A scientist can look at the discovered formula (e.g., `UPDRS = Age * log(Jitter)`) and form new biological theories about *why* those specific variables interact that way. You can even force the AI to keep the equation short and interpretable using the 'Complexity Penalty' slider on the left!
-      ")
+  # Intro and Variable Glossary
+  layout_columns(
+    col_widths = c(8, 4),
+    card(
+      card_header("Why Symbolic Regression?", class="bg-dark text-white"),
+      card_body(
+        markdown("
+        **Neural Networks** are highly accurate but act as unreadable 'Black Boxes'. 
+        **Symbolic Regression** solves this by evolving a clear, readable mathematical formula from scratch. It naturally discovers non-linear biological relationships (like thresholds or compounding effects) that doctors can actually read, understand, and verify in a lab.
+        ")
+      )
+    ),
+    card(
+      card_header("Dataset Variables", class="bg-dark text-white"),
+      card_body(
+        markdown("
+        *Predicting Parkinson's UPDRS using voice:*
+        - **Jitter / Shimmer:** Micro-variations in pitch and volume.
+        - **HNR:** Harmonics-to-Noise Ratio (vocal clarity).
+        - **PPE:** Pitch Period Entropy (dysphonia/hoarseness).
+        ")
+      )
     )
   ),
   
@@ -89,9 +101,7 @@ ui <- page_sidebar(
         verbatimTextOutput("lmEquation"),
         hr(),
         p("If predictions are perfect, all dots will hug the white dashed line."),
-        plotOutput("lmPlot", height = "300px"),
-        p("Error Distribution (We want a tall, narrow spike exactly at 0):"),
-        plotOutput("lmResid", height = "200px")
+        plotOutput("lmPlot", height = "400px")
       )
     ),
     
@@ -112,9 +122,7 @@ ui <- page_sidebar(
         plotOutput("gpHistory", height = "200px"),
         hr(),
         p("Does the custom math equation pull the dots tighter to the white line?"),
-        plotOutput("gpPlot", height = "300px"),
-        p("Error Distribution (A narrower spike means fewer wild mistakes):"),
-        plotOutput("gpResid", height = "200px")
+        plotOutput("gpPlot", height = "400px")
       )
     )
   )
@@ -148,13 +156,6 @@ server <- function(input, output, session) {
         geom_point(color="#3a7bd5", size=3, alpha=0.7) +
         geom_abline(intercept=0, slope=1, color="white", linetype="dashed", linewidth=1) +
         theme_dark() + labs(title="Actual vs Predicted (Linear)", x="Actual UPDRS Score", y="Predicted UPDRS Score") +
-        theme(plot.background = element_rect(fill = "#222222"), panel.background = element_rect(fill = "#333333"), text = element_text(color="white"), axis.text = element_text(color="white"))
-    })
-    
-    output$lmResid <- renderPlot({
-      ggplot(data.frame(Residuals = test_data$motor_UPDRS - lm_preds), aes(x=Residuals)) +
-        geom_density(fill="#3a7bd5", alpha=0.5) +
-        theme_dark() + labs(title="", x="Prediction Error", y="Density") +
         theme(plot.background = element_rect(fill = "#222222"), panel.background = element_rect(fill = "#333333"), text = element_text(color="white"), axis.text = element_text(color="white"))
     })
     
@@ -254,14 +255,6 @@ server <- function(input, output, session) {
         geom_point(color="#00d2ff", size=3, alpha=0.7) +
         geom_abline(intercept=0, slope=1, color="white", linetype="dashed", linewidth=1) +
         theme_dark() + labs(title="Actual vs Predicted (Symbolic)", x="Actual UPDRS Score", y="Predicted UPDRS Score") +
-        theme(plot.background = element_rect(fill = "#222222"), panel.background = element_rect(fill = "#333333"), text = element_text(color="white"), axis.text = element_text(color="white"))
-    })
-    
-    output$gpResid <- renderPlot({
-      if (is.infinite(gp_rmse)) return(plot.new())
-      ggplot(data.frame(Residuals = test_data$motor_UPDRS - gp_preds), aes(x=Residuals)) +
-        geom_density(fill="#00d2ff", alpha=0.5) +
-        theme_dark() + labs(title="", x="Prediction Error", y="Density") +
         theme(plot.background = element_rect(fill = "#222222"), panel.background = element_rect(fill = "#333333"), text = element_text(color="white"), axis.text = element_text(color="white"))
     })
   })
