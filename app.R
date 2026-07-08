@@ -3,17 +3,20 @@ library(ggplot2)
 library(gramEvol)
 library(bslib)
 
+# --- 1. Load and Prep Data ---
 df <- read.csv("parkinsons_updrs.data")
 features <- c("motor_UPDRS", "age", "Jitter.Abs.", "Shimmer", "HNR", "PPE")
 df_subset <- df[, features]
 colnames(df_subset) <- c("motor_UPDRS", "age", "JitterAbs", "Shimmer", "HNR", "PPE")
 
+# The Parkinson's dataset is notoriously noisy. R-squared on just 5 vocal features is naturally low.
 set.seed(42)
-df_sample <- df_subset[sample(nrow(df_subset), 300), ]
+df_sample <- df_subset[sample(nrow(df_subset), 400), ]
 train_idx <- sample(seq_len(nrow(df_sample)), size = floor(0.8 * nrow(df_sample)))
 train_data <- df_sample[train_idx, ]
 test_data  <- df_sample[-train_idx, ]
 
+# --- 2. Premium UI Design ---
 my_theme <- bs_theme(
   version = 5,
   bootswatch = "darkly",
@@ -28,25 +31,28 @@ ui <- page_sidebar(
   theme = my_theme,
   sidebar = sidebar(
     title = "Algorithm Controls",
-    h5("Symbolic Regression"),
-    p("These controls tell the algorithm how hard to look for the perfect math equation. More generations = more breeding of math formulas."),
-    numericInput("popSize", "Population Size (Formulas per generation):", value = 50, min = 10, max = 500),
-    numericInput("generations", "Generations (How many times to evolve):", value = 15, min = 5, max = 100),
-    actionButton("runModels", "Run & Compare Models", class = "btn-primary", style="font-weight:bold; font-size:16px;"),
-    hr(),
-    p(strong("What is this?")),
-    p("We are trying to predict a Parkinson's disease severity score ('Motor UPDRS') using just a patient's age and vocal cord measurements. We are comparing two AIs: one that forces a straight line, and one that invents its own math.")
+    h5("Evolutionary Parameters"),
+    p("Give the AI more time and a larger population to find a better mathematical fit."),
+    numericInput("popSize", "Population Size:", value = 250, min = 10, max = 1000, step=10),
+    numericInput("generations", "Generations:", value = 40, min = 5, max = 200, step=5),
+    numericInput("mutationChance", "Mutation Rate:", value = 0.1, min = 0.01, max = 0.5, step=0.01),
+    
+    h5("Interpretability Control"),
+    sliderInput("complexity_penalty", "Penalty for Complexity:", min=0, max=0.5, value=0.05, step=0.01),
+    p(style="font-size: 0.85em; color: #aaaaaa;", "Higher penalties force the AI to invent shorter, more human-readable equations by punishing long, messy formulas."),
+    
+    actionButton("runModels", "Run & Compare Models", class = "btn-primary", style="font-weight:bold; font-size:16px; margin-top: 15px;")
   ),
   
-  # Introductory Text for Non-Technical Audience
+  # Interpretability & Black Box Explanation
   card(
-    card_header("How do algorithms turn data into predictions?", class="bg-dark text-white"),
+    card_header("Why Symbolic Regression? The Power of Interpretability", class="bg-dark text-white"),
     card_body(
       markdown("
-      When doctors or scientists want to predict a patient's health score based on biological measurements, they usually rely on an algorithm to find the hidden math connecting the variables.
+      In modern medicine, AI models like **Neural Networks** are highly accurate, but they are 'Black Boxes'. They use millions of hidden weights, making it impossible for a doctor to understand *why* a prediction was made. 
 
-      *   **Traditional Linear Regression** is the standard workhorse. It assumes the relationship is a simple, straight-line weighted average (like adding up a receipt). It figures out *how much weight* to give each variable, but it can't handle complex, winding, or compounding relationships.
-      *   **Evolutionary Symbolic Regression** assumes nothing. It dumps variables, numbers, and math symbols (`+`, `-`, `*`, `/`, `sin`, `log`) into a digital arena. It pieces them together randomly to create thousands of math equations, tests them against the data, kills the bad ones, and 'breeds' the good ones together over multiple generations to invent a completely custom formula.
+      **Symbolic Regression bridges the gap between machine accuracy and human understanding.**
+      Instead of hiding its logic, it evolves an exact, readable mathematical formula. A scientist can look at the discovered formula (e.g., `UPDRS = Age * log(Jitter)`) and form new biological theories about *why* those specific variables interact that way. You can even force the AI to keep the equation short and interpretable using the 'Complexity Penalty' slider on the left!
       ")
     )
   ),
@@ -59,17 +65,17 @@ ui <- page_sidebar(
       full_screen = TRUE,
       card_header(class = "bg-secondary text-white", "1. Traditional Linear Regression"),
       card_body(
-        p("Linear Regression produces a 'weighted sum' equation. It assigns a multiplier to every single variable and adds them up. It is very easy to read, but very rigid."),
+        p("Linear Regression assumes everything is a simple, straight-line weighted average. It is perfectly interpretable, but completely inflexible."),
         layout_columns(
-          value_box(title = "Test RMSE (Lower is better)", value = textOutput("lmRmse"), theme = "secondary"),
-          value_box(title = "R-Squared (Closer to 1 is better)", value = textOutput("lmR2"), theme = "secondary")
+          value_box(title = "Test RMSE (Lower = Better)", value = textOutput("lmRmse"), theme = "secondary"),
+          value_box(title = "R-Squared (1.0 = Perfect)", value = textOutput("lmR2"), theme = "secondary")
         ),
         h5("The Final Equation:"),
         verbatimTextOutput("lmEquation"),
         hr(),
-        p("If the predictions are perfect, all dots will fall exactly on the white dashed line."),
+        p("If predictions are perfect, all dots will hug the white dashed line."),
         plotOutput("lmPlot", height = "300px"),
-        p("This shows the distribution of the errors (how far off the predictions were). We want a tall, narrow spike exactly at 0."),
+        p("Error Distribution (We want a tall, narrow spike exactly at 0):"),
         plotOutput("lmResid", height = "200px")
       )
     ),
@@ -79,17 +85,17 @@ ui <- page_sidebar(
       full_screen = TRUE,
       card_header(class = "bg-primary text-white", "2. Evolutionary Symbolic Regression"),
       card_body(
-        p("Symbolic Regression invents a custom, free-form equation. It might nest variables inside logarithms, divide them by each other, or ignore some variables entirely to find the perfect biological fit."),
+        p("Symbolic Regression invents a custom, free-form equation. It naturally discovers non-linear biological thresholds, compounding effects, and ratios."),
         layout_columns(
-          value_box(title = "Test RMSE (Lower is better)", value = textOutput("gpRmse"), theme = "primary"),
-          value_box(title = "R-Squared (Closer to 1 is better)", value = textOutput("gpR2"), theme = "primary")
+          value_box(title = "Test RMSE (Lower = Better)", value = textOutput("gpRmse"), theme = "primary"),
+          value_box(title = "R-Squared (1.0 = Perfect)", value = textOutput("gpR2"), theme = "primary")
         ),
         h5("The Discovered Equation:"),
         verbatimTextOutput("gpEquation"),
         hr(),
-        p("Compare this scatter plot to the Linear Regression. Which one hugs the white line better?"),
+        p("Does the custom math equation pull the dots tighter to the white line?"),
         plotOutput("gpPlot", height = "300px"),
-        p("Compare this error spread. A narrower spike at 0 means more consistent, accurate predictions."),
+        p("Error Distribution (A narrower spike means fewer wild mistakes):"),
         plotOutput("gpResid", height = "200px")
       )
     )
@@ -107,7 +113,6 @@ server <- function(input, output, session) {
     lm_rmse <- sqrt(mean((test_data$motor_UPDRS - lm_preds)^2))
     lm_r2 <- cor(test_data$motor_UPDRS, lm_preds)^2
     
-    # Format Linear Equation nicely
     cfs <- round(coef(lm_mod), 3)
     eq_str <- paste0("UPDRS = ", cfs[1], 
                      "\n      + (", cfs[2], " * Age)",
@@ -124,19 +129,19 @@ server <- function(input, output, session) {
       ggplot(data.frame(Actual = test_data$motor_UPDRS, Predicted = lm_preds), aes(x=Actual, y=Predicted)) +
         geom_point(color="#3a7bd5", size=3, alpha=0.7) +
         geom_abline(intercept=0, slope=1, color="white", linetype="dashed", linewidth=1) +
-        theme_dark() + labs(title="Actual vs Predicted (Linear)") +
+        theme_dark() + labs(title="Actual vs Predicted (Linear)", x="Actual UPDRS Score", y="Predicted UPDRS Score") +
         theme(plot.background = element_rect(fill = "#222222"), panel.background = element_rect(fill = "#333333"), text = element_text(color="white"), axis.text = element_text(color="white"))
     })
     
     output$lmResid <- renderPlot({
       ggplot(data.frame(Residuals = test_data$motor_UPDRS - lm_preds), aes(x=Residuals)) +
         geom_density(fill="#3a7bd5", alpha=0.5) +
-        theme_dark() + labs(title="Error Distribution (Linear)") +
+        theme_dark() + labs(title="", x="Prediction Error", y="Density") +
         theme(plot.background = element_rect(fill = "#222222"), panel.background = element_rect(fill = "#333333"), text = element_text(color="white"), axis.text = element_text(color="white"))
     })
     
     # Symbolic Model
-    showNotification("Evolving Equations via Genetic Algorithm... Please wait!", type = "warning", duration = NULL, id = "gp_notif")
+    showNotification("Evolving Equations via Genetic Algorithm... This will take ~10-20 seconds!", type = "warning", duration = NULL, id = "gp_notif")
     
     ruleDef <- list(
       expr = grule(op(expr, expr), func(expr), var, const),
@@ -152,12 +157,27 @@ server <- function(input, output, session) {
         eval_env <- list(age=train_data$age, JitterAbs=train_data$JitterAbs, Shimmer=train_data$Shimmer, HNR=train_data$HNR, PPE=train_data$PPE, c1=1.5, c2=0.5, c3=10.0)
         preds <- eval(expr, envir = eval_env)
         if (any(is.na(preds)) || any(is.infinite(preds))) return(Inf)
-        return(sqrt(mean((train_data$motor_UPDRS - preds)^2)))
+        
+        # Calculate RMSE
+        rmse <- sqrt(mean((train_data$motor_UPDRS - preds)^2))
+        
+        # Apply the Interpretability (Complexity) Penalty
+        # nchar gets the length of the string representation of the formula
+        expr_str <- deparse(expr)
+        complexity <- sum(nchar(expr_str))
+        penalty <- input$complexity_penalty * complexity
+        
+        return(rmse + penalty)
       }, error = function(e) { return(Inf) })
       return(result)
     }
     
-    ge <- GrammaticalEvolution(grammarDef, fitnessFunction, iterations = input$generations, popSize = input$popSize)
+    # Run the genetic algorithm
+    ge <- GrammaticalEvolution(grammarDef, fitnessFunction, 
+                               iterations = input$generations, 
+                               popSize = input$popSize,
+                               mutationChance = input$mutationChance)
+    
     removeNotification(id = "gp_notif")
     
     best_expr <- ge$best$expression
@@ -175,7 +195,8 @@ server <- function(input, output, session) {
     output$gpRmse <- renderText({ ifelse(is.infinite(gp_rmse), "Error", paste(round(gp_rmse, 2))) })
     output$gpR2 <- renderText({ ifelse(is.na(gp_r2), "Error", paste(round(gp_r2, 3))) })
     
-    eq_formatted <- paste("UPDRS =", paste(deparse(best_expr), collapse = " "))
+    # Neatly format the discovered expression
+    eq_formatted <- paste("UPDRS =\n", paste(deparse(best_expr), collapse = " \n"))
     output$gpEquation <- renderPrint({ cat(eq_formatted) })
     
     output$gpPlot <- renderPlot({
@@ -183,7 +204,7 @@ server <- function(input, output, session) {
       ggplot(data.frame(Actual = test_data$motor_UPDRS, Predicted = gp_preds), aes(x=Actual, y=Predicted)) +
         geom_point(color="#00d2ff", size=3, alpha=0.7) +
         geom_abline(intercept=0, slope=1, color="white", linetype="dashed", linewidth=1) +
-        theme_dark() + labs(title="Actual vs Predicted (Symbolic)") +
+        theme_dark() + labs(title="Actual vs Predicted (Symbolic)", x="Actual UPDRS Score", y="Predicted UPDRS Score") +
         theme(plot.background = element_rect(fill = "#222222"), panel.background = element_rect(fill = "#333333"), text = element_text(color="white"), axis.text = element_text(color="white"))
     })
     
@@ -191,7 +212,7 @@ server <- function(input, output, session) {
       if (is.infinite(gp_rmse)) return(plot.new())
       ggplot(data.frame(Residuals = test_data$motor_UPDRS - gp_preds), aes(x=Residuals)) +
         geom_density(fill="#00d2ff", alpha=0.5) +
-        theme_dark() + labs(title="Error Distribution (Symbolic)") +
+        theme_dark() + labs(title="", x="Prediction Error", y="Density") +
         theme(plot.background = element_rect(fill = "#222222"), panel.background = element_rect(fill = "#333333"), text = element_text(color="white"), axis.text = element_text(color="white"))
     })
   })
