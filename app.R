@@ -169,8 +169,8 @@ server <- function(input, output, session) {
       
       ruleDef <- list(
         expr = grule(op(expr, expr), func(expr), var, const),
-        op   = grule('+', '-', '*', safe_div),
-        func = grule(sin, cos, abs, safe_log, safe_sqrt),
+        op   = grule('+', '-', '*', safe_div, safe_pow),
+        func = grule(sin, cos, abs, safe_log, safe_sqrt, safe_exp),
         var  = grule(age, JitterAbs, Shimmer, HNR, PPE),
         const= grule(0.1, 0.5, 1.0, 2.0, 5.0, 10.0)
       )
@@ -215,7 +215,9 @@ server <- function(input, output, session) {
     safe_env_vars <- list(
       safe_log = function(x) log(abs(x) + 1e-6),
       safe_sqrt = function(x) sqrt(abs(x)),
-      safe_div = function(a, b) ifelse(abs(b) < 1e-6, a, a/b)
+      safe_div = function(a, b) ifelse(abs(b) < 1e-6, a, a/b),
+      safe_exp = function(x) exp(pmin(pmax(x, -50), 50)),
+      safe_pow = function(a, b) abs(a)^pmin(pmax(b, -10), 10)
     )
     
     if (is_parkinsons) {
