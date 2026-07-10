@@ -64,6 +64,26 @@ ui <- page_sidebar(
     tags$a(href="https://github.com/henryweimd/parkinsons-symbolic-regression", target="_blank", style="color: #00d2ff; text-decoration: none; font-weight: bold; display: block; text-align: center;", icon("github"), " View Source on GitHub")
   ),
   
+  # Python App Banner
+  card(
+    class = "text-white",
+    style = "margin-bottom: 15px; background: linear-gradient(135deg, #00d2ff, #3a7bd5); border-radius: 10px;",
+    card_body(
+      HTML("
+        <div style='display: flex; align-items: center; justify-content: space-between;'>
+          <div>
+            <h4 style='margin: 0; font-weight: bold;'>🐍 Try the Python version!</h4>
+            <p style='margin: 5px 0 0 0; font-size: 1.0em;'>A high-performance version of this dashboard built with <b>Streamlit</b> and <b>PySR</b>.</p>
+          </div>
+          <div>
+            <a href='https://symbolic-regression-demo.streamlit.app/' target='_blank' class='btn btn-light' style='font-weight: bold; margin-right: 10px; color: #3a7bd5;'>🚀 Live Python Demo (Streamlit)</a>
+            <a href='https://github.com/henryweimd/symbolic-regression-python-demo' target='_blank' class='btn btn-outline-light' style='font-weight: bold; color: white; border-color: white;'>View Python Source on GitHub</a>
+          </div>
+        </div>
+      ")
+    )
+  ),
+  
   # Intro, Context, and Citation
   card(
     card_header(textOutput("context_title"), class="bg-dark text-white"),

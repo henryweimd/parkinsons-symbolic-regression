@@ -1,6 +1,11 @@
 # AI Face-Off: Linear vs Symbolic Regression (Dual-Dataset Showcase)
 
-🚀 **[Click Here to View the Live Interactive Dashboard](https://henryweimd-parkinsons-symbolic-regression.share.connect.posit.cloud/)**
+🚀 **[Click Here to View the Live Interactive Dashboard (R Shiny)](https://henryweimd-parkinsons-symbolic-regression.share.connect.posit.cloud/)**
+
+## 🐍 Try the Python Version!
+A modernized, high-performance version of this dashboard has been built using **Python (Streamlit)** and **PySR**.
+- **[Live Python Demo (Streamlit)](https://symbolic-regression-demo.streamlit.app/)**
+- **[Python Source Code (GitHub)](https://github.com/henryweimd/symbolic-regression-python-demo)**
 
 ![App Screenshot](screenshot.png)
 
